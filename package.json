@@ -22,17 +22,19 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "@types/pdf-parse": "^1.1.5",
     "jose": "^6.0.11",
     "lucide-react": "^0.510.0",
     "mammoth": "^1.9.1",
     "next": "16.3.8",
     "next-themes": "^0.4.6",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^2.15.3",
     "uuid": "^11.1.0",
-    "zod": "^3.25.64",
-    "@prisma/client": "^6.9.0"
+    "zod": "^3.25.64"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

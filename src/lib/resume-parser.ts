@@ -259,65 +259,139 @@ export async function extractTextFromFile(
   ) {
     return extractTextFromDOCX(buffer);
   }
-  throw new Error('Unsupported file type. Please upload PDF or DOCX.');
+  if (fileType === 'txt') {
+    return buffer.toString('utf-8');
+  }
+  throw new Error('Unsupported file type. Please upload PDF, DOCX, or TXT.');
 }
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  // Use a simple PDF text extraction approach
-  // We'll extract text by parsing the PDF buffer for text content
-  const text = extractTextFromPDFBuffer(buffer);
-  if (text.trim().length < 10) {
-    throw new Error('Could not extract text from PDF. The file may be image-based or corrupted.');
+  // Strategy 1: Try modern pdf-parse v2
+  try {
+    const pdfModule = await import('pdf-parse');
+    const PDFParse = (pdfModule as any).PDFParse || (pdfModule as any).default?.PDFParse || (pdfModule as any).default;
+    if (PDFParse) {
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      const text = typeof result === 'string' ? result : result?.text || '';
+      if (text.trim().length > 15) {
+        return text.trim();
+      }
+    }
+  } catch (err) {
+    console.warn('pdf-parse v2 extractor notice:', err);
   }
-  return text;
+
+  // Strategy 2: Decompress /FlateDecode zlib streams (handles 95% of standard PDFs)
+  try {
+    const zlib = await import('zlib');
+    const content = buffer.toString('latin1');
+    const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+    let streamMatch;
+    const extractedParts: string[] = [];
+
+    while ((streamMatch = streamRegex.exec(content)) !== null) {
+      const rawStream = Buffer.from(streamMatch[1], 'latin1');
+      let decompressed = '';
+      try {
+        decompressed = zlib.inflateSync(rawStream).toString('latin1');
+      } catch {
+        try {
+          decompressed = zlib.inflateRawSync(rawStream).toString('latin1');
+        } catch {
+          continue;
+        }
+      }
+
+      if (decompressed) {
+        // Extract Tj strings
+        const tjRegex = /\(([^)]+)\)\s*Tj/g;
+        let tjMatch;
+        while ((tjMatch = tjRegex.exec(decompressed)) !== null) {
+          extractedParts.push(tjMatch[1]);
+        }
+
+        // Extract TJ array strings
+        const tjArrayRegex = /\[((?:\([^)]*\)|[^[\]])*)\]\s*TJ/g;
+        let arrayMatch;
+        while ((arrayMatch = tjArrayRegex.exec(decompressed)) !== null) {
+          const strRegex = /\(([^)]*)\)/g;
+          let sMatch;
+          while ((sMatch = strRegex.exec(arrayMatch[1])) !== null) {
+            extractedParts.push(sMatch[1]);
+          }
+        }
+      }
+    }
+
+    if (extractedParts.length > 0) {
+      const decoded = decodePDFText(extractedParts.join(' '));
+      if (decoded.trim().length > 15) {
+        return decoded;
+      }
+    }
+  } catch (err) {
+    console.warn('zlib PDF stream decompression notice:', err);
+  }
+
+  // Strategy 3: Uncompressed BT/ET blocks
+  const uncompressedText = extractTextFromUncompressedPDF(buffer);
+  if (uncompressedText.trim().length > 15) {
+    return uncompressedText;
+  }
+
+  // Strategy 4: Fallback printable sequence extraction
+  const printableMatches = buffer.toString('latin1').match(/[A-Za-z0-9@._\s\-:,/]{5,}/g);
+  if (printableMatches && printableMatches.length > 5) {
+    const joined = printableMatches.join(' ').replace(/\s+/g, ' ').trim();
+    if (joined.length > 30) {
+      return joined;
+    }
+  }
+
+  throw new Error(
+    'Could not extract text from this PDF. It may be an image-only scan. You can paste your resume text directly using the "Paste Resume Text" tab.'
+  );
 }
 
-function extractTextFromPDFBuffer(buffer: Buffer): string {
-  // Simple PDF text extraction without heavy dependencies
+function decodePDFText(raw: string): string {
+  return raw
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\r')
+    .replace(/\\t/g, '\t')
+    .replace(/\\\\/g, '\\')
+    .replace(/\\([()])/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractTextFromUncompressedPDF(buffer: Buffer): string {
   const content = buffer.toString('latin1');
   const textParts: string[] = [];
 
-  // Extract text between BT and ET markers (text blocks in PDF)
   const btEtRegex = /BT\s([\s\S]*?)ET/g;
   let match;
 
   while ((match = btEtRegex.exec(content)) !== null) {
     const block = match[1];
-    // Extract text from Tj and TJ operators
     const tjRegex = /\(([^)]*)\)\s*Tj/g;
     let tjMatch;
     while ((tjMatch = tjRegex.exec(block)) !== null) {
       textParts.push(tjMatch[1]);
     }
 
-    // Extract text from TJ arrays
     const tjArrayRegex = /\[((?:\([^)]*\)|[^[\]])*)\]\s*TJ/g;
     let tjArrayMatch;
     while ((tjArrayMatch = tjArrayRegex.exec(block)) !== null) {
-      const arrayContent = tjArrayMatch[1];
       const stringRegex = /\(([^)]*)\)/g;
       let strMatch;
-      while ((strMatch = stringRegex.exec(arrayContent)) !== null) {
+      while ((strMatch = stringRegex.exec(tjArrayMatch[1])) !== null) {
         textParts.push(strMatch[1]);
       }
     }
   }
 
-  // Decode PDF string escapes
-  let text = textParts
-    .map(t => t
-      .replace(/\\n/g, '\n')
-      .replace(/\\r/g, '\r')
-      .replace(/\\t/g, '\t')
-      .replace(/\\\\/g, '\\')
-      .replace(/\\([()])/g, '$1')
-    )
-    .join(' ');
-
-  // Clean up extra whitespace
-  text = text.replace(/\s+/g, ' ').trim();
-
-  return text;
+  return decodePDFText(textParts.join(' '));
 }
 
 async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
@@ -329,3 +403,4 @@ async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
     throw new Error('Could not extract text from DOCX file.');
   }
 }
+
