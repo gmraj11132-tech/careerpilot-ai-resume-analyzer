@@ -3,6 +3,7 @@
 # 🚀 CareerPilot
 ### *AI-Based Smart Placement & Resume Analyzer*
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-careerpilot--green--three.vercel.app-blueviolet?style=for-the-badge&logo=vercel)](https://careerpilot-green-three.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-blue?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -14,7 +15,9 @@
 
 **A production-ready, full-stack campus placement suite and resume optimization engine for engineering students.**
 
-[Explore Features](#-core-features--modules) • [How It Solves Real-World Problems](#-real-world-problem--solution) • [Quick Setup](#-quick-start-guide) • [Deploy to Vercel](#-free-public-deployment-guide-vercel)
+🔗 **Live Public Website:** [https://careerpilot-green-three.vercel.app](https://careerpilot-green-three.vercel.app)
+
+[Live Demo](https://careerpilot-green-three.vercel.app) • [Explore Features](#-core-features--modules) • [How It Solves Real-World Problems](#-real-world-problem--solution) • [Quick Setup](#-quick-start-guide) • [Deploy to Vercel](#-free-public-deployment-guide-vercel)
 
 </div>
 
