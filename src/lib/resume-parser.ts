@@ -1,4 +1,4 @@
-import { ParsedResume } from './types';
+import { ParsedResume, ALL_SKILLS } from './types';
 
 // Email pattern
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
@@ -7,12 +7,12 @@ const PHONE_REGEX = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{
 
 // Section header patterns
 const SECTION_PATTERNS: Record<string, RegExp> = {
-  education: /(?:^|\n)\s*(?:education|academic|qualification|degree)/i,
-  experience: /(?:^|\n)\s*(?:experience|work\s*history|employment|professional\s*experience|internship)/i,
-  skills: /(?:^|\n)\s*(?:skills|technical\s*skills|technologies|competencies|proficiencies)/i,
-  projects: /(?:^|\n)\s*(?:projects|personal\s*projects|academic\s*projects|key\s*projects)/i,
-  certifications: /(?:^|\n)\s*(?:certification|certificate|licenses|awards|achievements)/i,
-  summary: /(?:^|\n)\s*(?:summary|objective|profile|about\s*me|career\s*objective)/i,
+  education: /(?:^|\n)\s*(?:education|academics?|qualifications?|degrees?)\b[^\n]*\n?/i,
+  experience: /(?:^|\n)\s*(?:work\s*experience|experiences?|work\s*history|employment|professional\s*experience|internships?)\b[^\n]*\n?/i,
+  skills: /(?:^|\n)\s*(?:technical\s*skills?|skills?|technologies|competencies|proficiencies)\b[^\n]*\n?/i,
+  projects: /(?:^|\n)\s*(?:personal\s*projects?|academic\s*projects?|key\s*projects?|projects?)\b[^\n]*\n?/i,
+  certifications: /(?:^|\n)\s*(?:certifications?|certificates?|licenses?|awards?|achievements?)\b[^\n]*\n?/i,
+  summary: /(?:^|\n)\s*(?:career\s*summary|professional\s*summary|summary|objective|profile|about\s*me|career\s*objective)\b[^\n]*\n?/i,
 };
 
 function extractName(text: string): string {
@@ -112,8 +112,7 @@ function extractSkills(text: string): string[] {
   const section = extractSection(text, 'skills', ['projects', 'experience', 'education', 'certifications']);
 
   // Also scan entire text for known skills
-  const { ALL_SKILLS } = require('./types');
-  const allSkills: string[] = ALL_SKILLS as string[];
+  const allSkills = ALL_SKILLS;
   const found = new Set<string>();
 
   // From skills section

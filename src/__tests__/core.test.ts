@@ -1,6 +1,8 @@
 import { parseResumeText } from '../lib/resume-parser';
 import { analyzeResumeFallback, matchJobFallback, generateInterviewQuestionsFallback } from '../lib/fallback-analyzer';
 import { ParsedResume } from '../lib/types';
+import { registerSchema, loginSchema, jobApplicationSchema } from '../lib/validations';
+import { hashPassword, verifyPassword } from '../lib/auth';
 
 // ================================================================
 // UNIT TESTS - Resume Parser
@@ -273,7 +275,6 @@ describe('Interview Question Generator', () => {
 // ================================================================
 
 describe('Input Validation', () => {
-  const { registerSchema, loginSchema, jobApplicationSchema } = require('../lib/validations');
 
   test('register: rejects short password', () => {
     const result = registerSchema.safeParse({
@@ -356,8 +357,6 @@ describe('Input Validation', () => {
 // ================================================================
 
 describe('Password Hashing', () => {
-  // We test the auth module in isolation
-  const { hashPassword, verifyPassword } = require('../lib/auth');
 
   test('hashes password', async () => {
     const hash = await hashPassword('TestPassword1');

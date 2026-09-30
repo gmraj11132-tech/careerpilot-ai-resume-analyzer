@@ -29,26 +29,37 @@ export default function JobMatchPage() {
     setError("");
 
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setResult({
-          matchPercentage: 78,
-          analysisType: "AI-Powered",
-          matchingSkills: ["React", "TypeScript", "Node.js", "Team Leadership"],
-          missingSkills: ["GraphQL", "Docker", "CI/CD"],
-          relevantProjects: ["E-commerce Platform Refactor", "Admin Dashboard UI"],
-          relevantExperience: ["Senior Frontend Dev at Tech Corp", "Web Developer at Startup Inc"],
-          suggestedChanges: [
-            "Highlight your experience with scalable architectures in the summary.",
-            "Add a bullet point about deploying web apps to emphasize devops exposure."
-          ],
-          learningTopics: ["Introduction to Docker", "GraphQL Basics"],
-          keywords: ["Scalability", "Agile", "Cross-functional", "Performance"]
-        });
-        setLoading(false);
-      }, 2500);
-    } catch (err) {
-      setError("Failed to match resume with job.");
+      const res = await fetch("/api/jobs/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: formData.title,
+          companyName: formData.company,
+          jobDescription: formData.description,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to match resume with job.");
+      }
+
+      const data = await res.json();
+      const m = data.match;
+      setResult({
+        matchPercentage: m.matchPercentage,
+        analysisType: m.analysisType === "AI" ? "AI-Powered" : "Rule-Based Engine",
+        matchingSkills: m.matchingSkills || [],
+        missingSkills: m.missingSkills || [],
+        relevantProjects: m.relevantProjects || [],
+        relevantExperience: m.relevantExperience || [],
+        suggestedChanges: m.suggestedChanges || [],
+        learningTopics: m.suggestedTopics || [],
+        keywords: m.keywords || [],
+      });
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to match resume with job.");
       setLoading(false);
     }
   };

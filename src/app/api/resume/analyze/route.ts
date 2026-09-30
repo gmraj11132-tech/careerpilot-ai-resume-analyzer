@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getAuthUser } from '@/lib/session';
 import { analyzeResume } from '@/lib/ai-service';
-import { ParsedResume } from '@/lib/types';
+import { ParsedResume, SKILL_CATEGORIES } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -100,7 +100,6 @@ export async function POST(request: NextRequest) {
 }
 
 function categorizeSkill(skillName: string): string {
-  const { SKILL_CATEGORIES } = require('@/lib/types');
   for (const [category, skills] of Object.entries(SKILL_CATEGORIES)) {
     if ((skills as string[]).some(s => s.toLowerCase() === skillName.toLowerCase())) {
       return category;

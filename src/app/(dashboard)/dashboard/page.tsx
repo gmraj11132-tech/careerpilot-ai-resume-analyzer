@@ -40,7 +40,15 @@ export default function DashboardPage() {
         }
 
         const json = await res.json();
-        setData(json);
+        setData({
+          resumeScore: json.latestAnalysis?.overallScore ?? null,
+          skillsDetected: json.skillCount || 0,
+          applicationsCount: json.applicationCount || 0,
+          upcomingInterviews: json.upcomingInterviews || 0,
+          recentActivity: json.latestAnalysis
+            ? `Your resume '${json.latestAnalysis.resumeName || 'Resume'}' scored ${json.latestAnalysis.overallScore}/100.`
+            : null,
+        });
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {

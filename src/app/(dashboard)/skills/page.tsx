@@ -29,51 +29,92 @@ export default function SkillsPage() {
   const [newSkillCategory, setNewSkillCategory] = useState(CATEGORIES[0]);
   const [isAdding, setIsAdding] = useState(false);
 
-  useEffect(() => {
-    // Simulate fetch
-    setTimeout(() => {
-      setSkills([
-        { id: "1", name: "React", category: "Frontend", status: "Completed" },
-        { id: "2", name: "TypeScript", category: "Frontend", status: "Completed" },
-        { id: "3", name: "Node.js", category: "Backend", status: "Learning" },
-        { id: "4", name: "AWS", category: "DevOps", status: "Identified" },
-        { id: "5", name: "Communication", category: "Soft Skills", status: "Completed" },
-      ]);
+  const fetchSkills = async () => {
+    try {
+      const res = await fetch("/api/skills");
+      if (res.ok) {
+        const data = await res.json();
+        const list: Skill[] = [];
+        for (const [category, items] of Object.entries(data.skills || {})) {
+          for (const item of items as any[]) {
+            const rawStatus = item.status || "IDENTIFIED";
+            const formattedStatus = (rawStatus.charAt(0) + rawStatus.slice(1).toLowerCase()) as SkillStatus;
+            list.push({
+              id: item.userSkillId || item.id,
+              name: item.name,
+              category: category,
+              status: formattedStatus,
+            });
+          }
+        }
+        setSkills(list);
+      }
+    } catch (err) {
+      console.error("Failed to fetch skills:", err);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleAddSkill = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSkillName) return;
-    setIsAdding(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const newSkill: Skill = {
-        id: Math.random().toString(),
-        name: newSkillName,
-        category: newSkillCategory,
-        status: "Identified"
-      };
-      setSkills([...skills, newSkill]);
-      setNewSkillName("");
-      setIsAdding(false);
-    }, 500);
+    }
   };
 
-  const cycleStatus = (id: string) => {
-    setSkills(skills.map(skill => {
-      if (skill.id === id) {
-        const nextStatus: Record<SkillStatus, SkillStatus> = {
-          "Identified": "Learning",
-          "Learning": "Completed",
-          "Completed": "Identified"
-        };
-        return { ...skill, status: nextStatus[skill.status] };
+  useEffect(() => {
+    fetchSkills();
+  }, []);
+
+  const handleAddSkill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSkillName.trim()) return;
+    setIsAdding(true);
+    
+    try {
+      const res = await fetch("/api/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newSkillName.trim(),
+          category: newSkillCategory,
+        }),
+      });
+
+      if (res.ok) {
+        await fetchSkills();
+        setNewSkillName("");
       }
-      return skill;
-    }));
+    } catch (err) {
+      console.error("Failed to add skill:", err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const cycleStatus = async (id: string) => {
+    const targetSkill = skills.find(s => s.id === id);
+    if (!targetSkill) return;
+
+    const nextStatusMap: Record<SkillStatus, { ui: SkillStatus; db: string }> = {
+      "Identified": { ui: "Learning", db: "LEARNING" },
+      "Learning": { ui: "Completed", db: "COMPLETED" },
+      "Completed": { ui: "Identified", db: "IDENTIFIED" },
+    };
+
+    const next = nextStatusMap[targetSkill.status];
+
+    // Optimistic UI update
+    setSkills(skills.map(s => (s.id === id ? { ...s, status: next.ui } : s)));
+
+    try {
+      await fetch("/api/skills", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userSkillId: id,
+          status: next.db,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update skill status:", err);
+      // Revert if error
+      await fetchSkills();
+    }
   };
 
   const getStatusColor = (status: SkillStatus) => {

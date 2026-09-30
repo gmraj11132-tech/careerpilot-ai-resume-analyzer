@@ -36,30 +36,40 @@ export default function InterviewPrepPage() {
     setQuestions([]);
     
     try {
-      // Simulate API
-      setTimeout(() => {
-        setQuestions([
-          {
-            id: "1",
-            category: "Behavioral",
-            difficulty: "MEDIUM",
-            text: "Tell me about a time you had to work with a difficult team member. How did you handle it?",
-            answer: "In a previous project, a team member consistently missed deadlines, affecting our sprint goals. I scheduled a private 1-on-1 to understand their situation instead of confronting them publicly. I discovered they were blocked on a specific technology we were using. I offered to pair program for an hour a day, and we adjusted their task load in the next sprint planning.",
-            keyPoints: ["Empathy and active listening", "Private conflict resolution", "Actionable solutions (pair programming)", "Process improvement"]
-          },
-          {
-            id: "2",
-            category: "Technical",
-            difficulty: "HARD",
-            text: `How would you optimize a React application that is experiencing slow re-renders?`,
-            answer: "First, I would use React Profiler to identify which components are re-rendering unnecessarily. Based on the findings, I'd implement several strategies: 1) Memoize expensive calculations with useMemo. 2) Wrap pure functional components in React.memo. 3) Use useCallback for passing function references down to child components. 4) Optimize context usage by splitting contexts or using selectors to prevent cascading renders.",
-            keyPoints: ["Use React DevTools Profiler", "useMemo & useCallback", "React.memo", "Context optimization", "Component splitting"]
-          }
-        ]);
-        setLoading(false);
-      }, 2000);
-    } catch (err) {
-      setError("Failed to generate questions");
+      const skillsArray = formData.skills
+        ? formData.skills.split(",").map(s => s.trim()).filter(Boolean)
+        : ["Problem Solving", "Communication"];
+
+      const res = await fetch("/api/interview/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: formData.title,
+          skills: skillsArray.length > 0 ? skillsArray : ["General"],
+          difficulty: formData.difficulty,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to generate questions");
+      }
+
+      const data = await res.json();
+      const rawQuestions = data.session?.questions || [];
+      const formatted: Question[] = rawQuestions.map((q: any) => ({
+        id: q.id,
+        category: (q.category.charAt(0) + q.category.slice(1).toLowerCase()) as any,
+        difficulty: q.difficulty,
+        text: q.question,
+        answer: q.suggestedAnswer || "",
+        keyPoints: Array.isArray(q.keyPoints) ? q.keyPoints : [],
+      }));
+
+      setQuestions(formatted);
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to generate questions");
       setLoading(false);
     }
   };

@@ -34,35 +34,59 @@ export default function ApplicationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Application>>({ status: "Applied", date: new Date().toISOString().split('T')[0] });
 
-  useEffect(() => {
-    // Simulate fetch
-    setTimeout(() => {
-      setApplications([
-        { id: "1", company: "Google", title: "Frontend Engineer", location: "Remote", url: "#", date: "2023-10-01", status: "Interview" },
-        { id: "2", company: "Meta", title: "React Developer", location: "Menlo Park, CA", url: "#", date: "2023-10-05", status: "Applied" },
-        { id: "3", company: "Stripe", title: "UI Engineer", location: "San Francisco, CA", url: "#", date: "2023-09-20", status: "Rejected" },
-      ]);
+  const fetchApps = async () => {
+    try {
+      const res = await fetch("/api/applications");
+      if (res.ok) {
+        const data = await res.json();
+        const apps = (data.applications || []).map((a: any) => ({
+          id: a.id,
+          company: a.company,
+          title: a.jobTitle,
+          location: a.location || "",
+          url: a.jobUrl || "",
+          date: a.appliedDate ? new Date(a.appliedDate).toISOString().split('T')[0] : "",
+          status: (a.status.charAt(0) + a.status.slice(1).toLowerCase()) as AppStatus,
+        }));
+        setApplications(apps);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchApps();
   }, []);
 
-  const handleSaveApp = (e: React.FormEvent) => {
+  const handleSaveApp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.company || !formData.title) return;
     
-    const newApp = {
-      id: Math.random().toString(),
-      company: formData.company,
-      title: formData.title,
-      location: formData.location || "",
-      url: formData.url || "",
-      date: formData.date || new Date().toISOString().split('T')[0],
-      status: (formData.status as AppStatus) || "Applied"
-    };
+    try {
+      const res = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company: formData.company,
+          jobTitle: formData.title,
+          location: formData.location || "",
+          jobUrl: formData.url || "",
+          appliedDate: formData.date || new Date().toISOString().split('T')[0],
+          status: ((formData.status as string) || "APPLIED").toUpperCase(),
+        }),
+      });
 
-    setApplications([newApp, ...applications]);
-    setIsModalOpen(false);
-    setFormData({ status: "Applied", date: new Date().toISOString().split('T')[0] });
+      if (res.ok) {
+        await fetchApps();
+        setIsModalOpen(false);
+        setFormData({ status: "Applied", date: new Date().toISOString().split('T')[0] });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const filteredApps = applications.filter(app => {

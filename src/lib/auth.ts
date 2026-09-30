@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { SignJWT, jwtVerify } from 'jose';
 
 const SALT_ROUNDS = 16;
 const KEY_LENGTH = 64;
@@ -45,6 +44,7 @@ export interface JwtPayload {
 }
 
 export async function createToken(payload: JwtPayload): Promise<string> {
+  const { SignJWT } = await import('jose');
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
@@ -55,6 +55,7 @@ export async function createToken(payload: JwtPayload): Promise<string> {
 
 export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
+    const { jwtVerify } = await import('jose');
     const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as unknown as JwtPayload;
   } catch {

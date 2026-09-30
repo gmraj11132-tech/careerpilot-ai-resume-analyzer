@@ -71,8 +71,7 @@ export default function ResumeUploadPage() {
       if (!res.ok) throw new Error("Failed to upload resume.");
       
       const data = await res.json();
-      // Simulate parsed data or use real response if available
-      setParsedData(data.parsedData || {
+      setParsedData(data.resume?.parsed || data.parsedData || {
         name: user?.name || "John Doe",
         email: user?.email || "john@example.com",
         phone: "+1 234 567 890",

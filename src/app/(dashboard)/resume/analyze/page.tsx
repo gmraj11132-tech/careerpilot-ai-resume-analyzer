@@ -18,45 +18,78 @@ export default function ResumeAnalyzePage() {
 
   const fetchResume = async () => {
     try {
-      // Simulating API call
-      setTimeout(() => {
-        setResumeData({ id: "res_123", name: "resume.pdf", uploadedAt: new Date().toISOString() });
-        setLoading(false);
-      }, 1000);
-    } catch (err) {
-      setError("Failed to fetch resume status.");
+      const res = await fetch("/api/resume/upload");
+      if (!res.ok) throw new Error("Failed to fetch resume");
+      const data = await res.json();
+      if (data.resumes && data.resumes.length > 0) {
+        const latest = data.resumes[0];
+        setResumeData(latest);
+        
+        // Also load latest analysis if available
+        const anRes = await fetch("/api/resume/analyze");
+        if (anRes.ok) {
+          const anData = await anRes.json();
+          if (anData.analyses && anData.analyses.length > 0) {
+            const a = anData.analyses[0];
+            setAnalysisResult({
+              score: a.overallScore,
+              type: a.analysisType === "AI" ? "AI-Powered" : "Rule-Based Engine",
+              breakdown: {
+                ats: a.atsScore,
+                skills: a.skillsScore,
+                experience: a.experienceScore,
+                education: a.educationScore,
+                formatting: a.formattingScore,
+              },
+              missingSections: a.missingSections || [],
+              detectedSkills: a.detectedSkills || [],
+              suggestions: a.suggestions || [],
+            });
+          }
+        }
+      } else {
+        setResumeData(null);
+      }
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch resume status.");
       setLoading(false);
     }
   };
 
   const handleAnalyze = async () => {
+    if (!resumeData?.id) return;
     setAnalyzing(true);
     setError("");
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setAnalysisResult({
-          score: 85,
-          type: "AI-Powered",
-          breakdown: {
-            ats: 90,
-            skills: 80,
-            experience: 85,
-            education: 95,
-            formatting: 75
-          },
-          missingSections: ["Projects", "Certifications"],
-          detectedSkills: ["React", "TypeScript", "Node.js", "AWS"],
-          suggestions: [
-            "Quantify your achievements in the experience section (e.g., 'Increased performance by X%').",
-            "Add a dedicated projects section to showcase practical application of your skills.",
-            "Use standard section headers like 'Work Experience' instead of 'Career History' for better ATS parsing."
-          ]
-        });
-        setAnalyzing(false);
-      }, 2000);
-    } catch (err) {
-      setError("Analysis failed. Please try again.");
+      const res = await fetch("/api/resume/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeId: resumeData.id }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Analysis failed.");
+      }
+      const data = await res.json();
+      const a = data.analysis;
+      setAnalysisResult({
+        score: a.overall,
+        type: a.analysisType === "AI" ? "AI-Powered" : "Rule-Based Engine",
+        breakdown: {
+          ats: a.ats,
+          skills: a.skills,
+          experience: a.experience,
+          education: a.education,
+          formatting: a.formatting,
+        },
+        missingSections: a.missingSections || [],
+        detectedSkills: a.detectedSkills || [],
+        suggestions: a.suggestions || [],
+      });
+      setAnalyzing(false);
+    } catch (err: any) {
+      setError(err.message || "Analysis failed. Please try again.");
       setAnalyzing(false);
     }
   };
