@@ -12,8 +12,8 @@ Before setting up CareerPilot, ensure you have the following installed on your m
 1. **Clone the Repository**
    Open your terminal and run:
    ```bash
-   git clone https://github.com/gmraj11132-tech/careerpilot.git
-   cd careerpilot
+   git clone https://github.com/gmraj11132-tech/careerpilot-ai-resume-analyzer.git
+   cd careerpilot-ai-resume-analyzer
    ```
 
 2. **Install Dependencies**

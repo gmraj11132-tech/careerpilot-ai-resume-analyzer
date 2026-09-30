@@ -47,8 +47,8 @@ CareerPilot follows a modern, decoupled architecture. The frontend is built with
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/gmraj11132-tech/careerpilot.git
-   cd careerpilot
+   git clone https://github.com/gmraj11132-tech/careerpilot-ai-resume-analyzer.git
+   cd careerpilot-ai-resume-analyzer
    ```
 
 2. **Install dependencies**:
