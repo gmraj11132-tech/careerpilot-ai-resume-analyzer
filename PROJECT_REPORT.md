@@ -66,10 +66,11 @@ The database schema is designed around the `User` entity. Key relationships incl
 *(See ARCHITECTURE.md for the complete ER Diagram).*
 
 ## 14. Module Description
-- **Authentication:** Uses secure HTTP-only cookies storing JWTs.
-- **Resume Engine:** Accepts PDF/TXT, utilizes parsing libraries to extract raw text, and feeds it to the AI/Fallback services to generate an ATS score and keyword list.
+- **Authentication:** Uses secure HTTP-only cookies storing JWTs (HS256) with PBKDF2 password derivation (100,000 iterations, SHA-512).
+- **Multi-Model Resume Engine:** Accepts PDF/DOCX resumes, extracts key candidate blocks (Education, Skills, Experience, Projects), and dynamically routes to candidate-selected LLMs (Google Gemini 2.0 Flash/1.5 Pro, OpenAI GPT-4o/GPT-4o Mini, Anthropic Claude 3.5 Sonnet, Groq Llama 3.3 70B) or the local Deterministic Heuristic Engine.
 - **Dashboard:** An aggregated view presenting recent applications, average scores, and pending tasks using Recharts for visual analytics.
-- **Job Matcher:** Cross-references parsed skills with a database of job descriptions to output a match percentage.
+- **Smart Job Matcher:** Cross-references parsed skills and project tech stacks with job descriptions, returning alignment scores, missing skills, and targeted ATS keyword enhancements.
+- **Interview Mock Assistant:** Formulates technical, behavioral (STAR), HR, and architectural questions with structured exemplar responses based on selected difficulty and tech stacks.
 
 ## 15. API Design
 The RESTful API provides structured endpoints for all functionalities. For example, `POST /api/resume/analyze` handles the core processing, while `GET /api/applications` retrieves user-specific tracking data. *(Refer to API.md for full endpoint specifications).*

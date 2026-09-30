@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { jobTitle, companyName, jobDescription } = parsed.data;
+    const { modelId, provider: chosenProvider, customApiKey } = body;
 
     // Get latest resume
     const resume = await prisma.resume.findFirst({
@@ -49,7 +50,16 @@ export async function POST(request: NextRequest) {
       rawText: resume.rawText || '',
     };
 
-    const { result, mode } = await matchJob(resumeParsed, jobDescription, jobTitle);
+    const { result, mode, modelName, provider } = await matchJob(
+      resumeParsed,
+      jobDescription,
+      jobTitle,
+      {
+        modelId,
+        provider: chosenProvider,
+        customApiKey,
+      }
+    );
 
     // Save match result
     const jobMatch = await prisma.jobMatch.create({
@@ -68,6 +78,8 @@ export async function POST(request: NextRequest) {
         suggestedTopics: JSON.parse(JSON.stringify(result.suggestedTopics)),
         keywords: JSON.parse(JSON.stringify(result.keywords)),
         analysisType: mode,
+        modelName,
+        provider,
       },
     });
 
@@ -76,6 +88,8 @@ export async function POST(request: NextRequest) {
         id: jobMatch.id,
         ...result,
         analysisType: mode,
+        modelName,
+        provider,
       },
     });
   } catch (error) {

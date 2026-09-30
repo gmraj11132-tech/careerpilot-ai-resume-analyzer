@@ -105,3 +105,95 @@ export const SKILL_CATEGORIES: Record<string, string[]> = {
 };
 
 export const ALL_SKILLS = Object.values(SKILL_CATEGORIES).flat();
+
+// ================================================================
+// MULTI-MODEL AI CONFIGURATION TYPES
+// ================================================================
+
+export type AIProvider = 'google' | 'openai' | 'anthropic' | 'groq' | 'fallback';
+
+export interface AIModelOption {
+  id: string;
+  name: string;
+  provider: AIProvider;
+  model: string;
+  description: string;
+  badge?: string;
+  speed: 'Ultra Fast' | 'Fast' | 'Balanced' | 'Deep Reasoning';
+}
+
+export interface ModelExecutionOptions {
+  modelId?: string;
+  provider?: AIProvider;
+  customApiKey?: string;
+}
+
+export const AVAILABLE_MODELS: AIModelOption[] = [
+  {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    provider: 'google',
+    model: 'gemini-2.0-flash',
+    description: 'Next-gen multimodal speed & precision from Google',
+    badge: 'Recommended',
+    speed: 'Ultra Fast',
+  },
+  {
+    id: 'gemini-1.5-pro',
+    name: 'Gemini 1.5 Pro',
+    provider: 'google',
+    model: 'gemini-1.5-pro',
+    description: 'Advanced reasoning and deep structural analysis',
+    speed: 'Deep Reasoning',
+  },
+  {
+    id: 'gpt-4o',
+    name: 'OpenAI GPT-4o',
+    provider: 'openai',
+    model: 'gpt-4o',
+    description: 'Flagship omni-model for high-fidelity resume evaluation',
+    speed: 'Balanced',
+  },
+  {
+    id: 'gpt-4o-mini',
+    name: 'OpenAI GPT-4o Mini',
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+    description: 'Ultra-fast and cost-effective intelligent feedback',
+    speed: 'Fast',
+  },
+  {
+    id: 'claude-3-5-sonnet',
+    name: 'Claude 3.5 Sonnet',
+    provider: 'anthropic',
+    model: 'claude-3-5-sonnet-20241022',
+    description: 'Nuanced career prose analysis and actionability',
+    speed: 'Balanced',
+  },
+  {
+    id: 'groq-llama-3.3-70b',
+    name: 'Llama 3.3 70B (Groq)',
+    provider: 'groq',
+    model: 'llama-3.3-70b-versatile',
+    description: 'Open-weights powerhouse on Groq LPUs for instant inference',
+    speed: 'Ultra Fast',
+  },
+  {
+    id: 'groq-deepseek-r1',
+    name: 'DeepSeek R1 (Groq)',
+    provider: 'groq',
+    model: 'deepseek-r1-distill-llama-70b',
+    description: 'Reasoning-distilled model optimized for technical ATS matching',
+    speed: 'Fast',
+  },
+  {
+    id: 'deterministic-fallback',
+    name: 'Deterministic Heuristic Engine',
+    provider: 'fallback',
+    model: 'rule-based-v1',
+    description: 'Zero-latency offline engine; ATS heuristics without external keys',
+    badge: '100% Offline',
+    speed: 'Ultra Fast',
+  },
+];
+

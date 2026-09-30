@@ -383,3 +383,83 @@ describe('Password Hashing', () => {
     expect(hash1).not.toBe(hash2); // Different salts
   });
 });
+
+// ================================================================
+// UNIT TESTS - Multi-Model AI Service & Model Options
+// ================================================================
+
+import { AVAILABLE_MODELS } from '../lib/types';
+import { analyzeResume, matchJob, generateInterviewQuestions } from '../lib/ai-service';
+
+describe('Multi-Model AI Service', () => {
+  const sampleParsed: ParsedResume = {
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    phone: '+91-9999999999',
+    education: [
+      { institution: 'ABC University', degree: 'B.Tech', field: 'CSE', year: '2025' }
+    ],
+    skills: ['Python', 'React', 'TypeScript', 'SQL', 'FastAPI'],
+    projects: [
+      { name: 'AI Portal', description: 'Web app with AI', technologies: ['React', 'FastAPI'] }
+    ],
+    experience: [],
+    certifications: ['AWS Cloud Practitioner'],
+    summary: 'Aspiring software engineer with full-stack skills.',
+    rawText: 'Jane Doe resume text',
+  };
+
+  test('AVAILABLE_MODELS contains all target providers', () => {
+    const providers = AVAILABLE_MODELS.map(m => m.provider);
+    expect(providers).toContain('google');
+    expect(providers).toContain('openai');
+    expect(providers).toContain('anthropic');
+    expect(providers).toContain('groq');
+    expect(providers).toContain('fallback');
+  });
+
+  test('analyzeResume falls back gracefully when API key is missing', async () => {
+    const result = await analyzeResume(sampleParsed, {
+      modelId: 'deterministic-fallback',
+      provider: 'fallback',
+    });
+    expect(result.mode).toBe('FALLBACK');
+    expect(result.score.overall).toBeGreaterThanOrEqual(0);
+    expect(result.score.overall).toBeLessThanOrEqual(100);
+    expect(result.modelName).toBe('Deterministic Heuristic Engine');
+  });
+
+  test('analyzeResume routes properly with explicit model selection', async () => {
+    const result = await analyzeResume(sampleParsed, {
+      modelId: 'gemini-2.0-flash',
+      provider: 'google',
+    });
+    // In test environment without GEMINI_API_KEY, gracefully falls back to deterministic engine
+    expect(result.score).toBeDefined();
+    expect(result.score.ats).toBeGreaterThan(0);
+  });
+
+  test('matchJob works with custom model parameter', async () => {
+    const match = await matchJob(
+      sampleParsed,
+      'Seeking a React and TypeScript engineer with Python skills.',
+      'Software Engineer',
+      { modelId: 'gpt-4o', provider: 'openai' }
+    );
+    expect(match.result).toBeDefined();
+    expect(match.result.matchPercentage).toBeGreaterThan(0);
+    expect(match.result.matchingSkills).toContain('React');
+  });
+
+  test('generateInterviewQuestions works across difficulty levels with model options', async () => {
+    const result = await generateInterviewQuestions(
+      'Full Stack Developer',
+      ['React', 'TypeScript', 'Node.js'],
+      'HARD',
+      { modelId: 'groq-llama-3.3-70b', provider: 'groq' }
+    );
+    expect(result.questions.length).toBeGreaterThan(0);
+    expect(result.questions[0].difficulty).toBe('HARD');
+  });
+});
+

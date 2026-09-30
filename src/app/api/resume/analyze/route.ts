@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { resumeId } = body;
+    const { resumeId, modelId, provider: chosenProvider, customApiKey } = body;
 
     if (!resumeId) {
       return NextResponse.json({ error: 'Resume ID is required' }, { status: 400 });
@@ -41,8 +41,12 @@ export async function POST(request: NextRequest) {
       rawText: resume.rawText || '',
     };
 
-    // Run analysis
-    const { score, mode } = await analyzeResume(parsed);
+    // Run multi-model analysis
+    const { score, mode, modelName, provider } = await analyzeResume(parsed, {
+      modelId,
+      provider: chosenProvider,
+      customApiKey,
+    });
 
     // Save analysis
     const analysis = await prisma.resumeAnalysis.create({
@@ -59,6 +63,8 @@ export async function POST(request: NextRequest) {
         detectedSkills: JSON.parse(JSON.stringify(score.detectedSkills)),
         suggestions: JSON.parse(JSON.stringify(score.suggestions)),
         analysisType: mode,
+        modelName,
+        provider,
       },
     });
 
@@ -88,6 +94,8 @@ export async function POST(request: NextRequest) {
         id: analysis.id,
         ...score,
         analysisType: mode,
+        modelName,
+        provider,
       },
     });
   } catch (error) {

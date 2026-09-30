@@ -21,11 +21,17 @@ export async function POST(request: NextRequest) {
     }
 
     const { jobTitle, skills, difficulty } = parsed.data;
+    const { modelId, provider: chosenProvider, customApiKey } = body;
 
-    const { questions, mode } = await generateInterviewQuestions(
+    const { questions, mode, modelName, provider } = await generateInterviewQuestions(
       jobTitle,
       skills,
-      difficulty
+      difficulty,
+      {
+        modelId,
+        provider: chosenProvider,
+        customApiKey,
+      }
     );
 
     // Save session and questions
@@ -35,6 +41,8 @@ export async function POST(request: NextRequest) {
         jobTitle,
         skills: JSON.parse(JSON.stringify(skills)),
         difficulty,
+        modelName,
+        provider,
         questions: {
           create: questions.map(q => ({
             category: q.category,
@@ -52,6 +60,8 @@ export async function POST(request: NextRequest) {
       session: {
         ...session,
         analysisType: mode,
+        modelName,
+        provider,
       },
     }, { status: 201 });
   } catch (error) {

@@ -97,12 +97,36 @@ erDiagram
     }
 ```
 
-## AI Architecture
+## AI Architecture (Multi-Model Engine)
 
-The AI module is responsible for intelligent analysis.
-- **AIService**: The central interface for AI operations.
-- **LLMProvider**: Connects to external Large Language Models for advanced NLP tasks.
-- **FallbackAnalyzer**: A rule-based local analyzer that takes over if the external LLM is unavailable or for basic tier requests, ensuring the system remains functional.
+CareerPilot integrates a modular **Multi-Model AI Dispatcher** alongside a zero-latency **Deterministic Heuristic Engine**:
+
+```mermaid
+flowchart TD
+    Client[Client UI: ModelSelector] --> APIRoute[Next.js API Route]
+    APIRoute --> AIService[AIService Dispatcher]
+    
+    AIService --> Router{Model & Provider Selection}
+    Router -->|google| Gemini[Google Gemini 2.0 Flash / 1.5 Pro]
+    Router -->|openai| OpenAI[OpenAI GPT-4o / GPT-4o Mini]
+    Router -->|anthropic| Claude[Anthropic Claude 3.5 Sonnet]
+    Router -->|groq| Groq[Groq LPU: Llama 3.3 70B / DeepSeek R1]
+    Router -->|fallback / no key / error| Fallback[Deterministic Heuristic Engine]
+    
+    Gemini --> Normalizer[JSON Schema Normalizer]
+    OpenAI --> Normalizer
+    Claude --> Normalizer
+    Groq --> Normalizer
+    Fallback --> Normalizer
+    
+    Normalizer --> DB[(Prisma / SQLite / Postgres)]
+    Normalizer --> Response[Client Response with Model Metadata]
+```
+
+- **Dynamic Provider Routing**: Native REST calls for Google Gemini, OpenAI, Anthropic Claude, and Groq without heavyweight SDK bloat.
+- **Runtime Model Selection**: Candidates and evaluators can select specific models (e.g. Gemini 2.0 Flash, GPT-4o, Claude 3.5 Sonnet, Llama 3.3 70B) in real-time directly from the UI.
+- **Fail-Safe Deterministic Fallback**: If external APIs exceed rate limits, fail network checks, or lack API keys, CareerPilot seamlessly defaults to the local deterministic rule engine without throwing user-facing 500 errors.
+- **Model Metadata Tracking**: Every analysis records `modelName` and `provider` in the database for auditing and comparative evaluations.
 
 ## Auth Flow
 

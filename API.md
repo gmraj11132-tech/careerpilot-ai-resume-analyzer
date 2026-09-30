@@ -55,17 +55,43 @@
 - **Method:** `POST`
 - **Path:** `/api/resume/analyze`
 - **Auth Required:** Yes
-- **Request Body:** `{ "resumeId": "..." }`
-- **Response Format:** `{ "analysisId": "...", "atsScore": 85, "feedback": "..." }`
-- **Status Codes:** `200 OK`, `404 Not Found`
+- **Request Body:**
+  ```json
+  {
+    "resumeId": "cuid_string",
+    "modelId": "gemini-2.0-flash | gpt-4o | claude-3-5-sonnet | groq-llama-3.3-70b | deterministic-fallback",
+    "provider": "google | openai | anthropic | groq | fallback",
+    "customApiKey": "optional_api_key_override"
+  }
+  ```
+- **Response Format:**
+  ```json
+  {
+    "analysis": {
+      "id": "cuid",
+      "overall": 82,
+      "ats": 80,
+      "skills": 85,
+      "experience": 75,
+      "education": 90,
+      "formatting": 80,
+      "missingSections": [],
+      "detectedSkills": ["React", "TypeScript", "Node.js"],
+      "suggestions": ["Add metrics to projects", "Include GitHub link"],
+      "analysisType": "AI",
+      "modelName": "Gemini 2.0 Flash",
+      "provider": "google"
+    }
+  }
+  ```
+- **Status Codes:** `200 OK`, `400 Bad Request`, `401 Unauthorized`, `404 Not Found`
 
 ### Get Resume Analysis
 - **Method:** `GET`
 - **Path:** `/api/resume/analyze`
 - **Auth Required:** Yes
-- **Query Params:** `?resumeId=...`
-- **Response Format:** `{ "atsScore": 85, "keywords": [...], "suggestions": [...] }`
-- **Status Codes:** `200 OK`
+- **Response Format:** `{ "analyses": [ { "id": "...", "overallScore": 82, "modelName": "...", ... } ] }`
+- **Status Codes:** `200 OK`, `401 Unauthorized`
 
 
 ## Job APIs
@@ -74,9 +100,33 @@
 - **Method:** `POST`
 - **Path:** `/api/jobs/match`
 - **Auth Required:** Yes
-- **Request Body:** `{ "resumeId": "..." }`
-- **Response Format:** `{ "matches": [ { "jobId": "...", "score": 90 } ] }`
-- **Status Codes:** `200 OK`
+- **Request Body:**
+  ```json
+  {
+    "jobTitle": "Frontend Engineer",
+    "companyName": "Acme Corp",
+    "jobDescription": "Full job description text...",
+    "modelId": "gpt-4o",
+    "provider": "openai",
+    "customApiKey": "optional_key"
+  }
+  ```
+- **Response Format:**
+  ```json
+  {
+    "match": {
+      "id": "cuid",
+      "matchPercentage": 85,
+      "matchingSkills": ["React", "TypeScript"],
+      "missingSkills": ["GraphQL"],
+      "suggestedChanges": ["Highlight state management"],
+      "analysisType": "AI",
+      "modelName": "OpenAI GPT-4o",
+      "provider": "openai"
+    }
+  }
+  ```
+- **Status Codes:** `200 OK`, `400 Bad Request`, `401 Unauthorized`
 
 ### Get Job Matches
 - **Method:** `GET`

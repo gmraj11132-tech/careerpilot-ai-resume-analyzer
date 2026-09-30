@@ -15,12 +15,13 @@
 
 ## Features
 
-- **Resume Analysis**: Upload resumes (PDF/TXT) and receive detailed ATS scoring, keyword extraction, and structural feedback.
-- **Job Matching**: AI-driven recommendation engine matching student profiles to available job postings.
-- **Skill Gap Analysis**: Compares current skills with desired job roles to highlight areas for improvement.
-- **Application Tracker**: Kanban-style board to manage and track job applications across different stages.
-- **Interview Prep**: Generate role-specific interview questions and practice sessions.
-- **AI/Fallback Mechanisms**: Robust fallback logic ensuring the platform functions seamlessly even if external AI services are temporarily unavailable.
+- **Multi-Model AI Resume Analysis**: Upload PDF or DOCX resumes and analyze with Google Gemini 2.0 Flash / 1.5 Pro, OpenAI GPT-4o / GPT-4o Mini, Anthropic Claude 3.5 Sonnet, or Groq Llama 3.3 70B, with automatic deterministic fallback.
+- **CareerPilot ATS Scoring**: Comprehensive weighted scoring across ATS readability, skills match, experience, education, and structural formatting.
+- **Job Matching & Keyword Alignment**: Paste any job opening requirements to compute match percentages, identify missing skills, and extract target ATS keywords.
+- **Skill Gap Analysis**: Categorized skills tracker (Programming, Web Dev, Databases, AI/ML, Cloud/DevOps) with interactive status cycling (Identified, Learning, Completed).
+- **Application Tracker**: Full pipeline tracking for applications (Saved, Applied, Assessment, Interview, Offer, Rejected) with search and filtering.
+- **AI Interview Prep**: Generate realistic technical, HR, behavioral (STAR), and project questions tailored to target roles with structured model answers.
+- **100% Offline Deterministic Engine**: Built-in deterministic rule engine guaranteeing zero-cost, instant offline evaluation without requiring external API keys.
 
 ## Tech Stack
 

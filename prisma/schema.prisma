@@ -122,6 +122,8 @@ model ResumeAnalysis {
   detectedSkills  Json
   suggestions     Json
   analysisType    AnalysisType @default(AI)
+  modelName       String?
+  provider        String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
@@ -149,6 +151,8 @@ model JobMatch {
   suggestedTopics    Json
   keywords           Json
   analysisType       AnalysisType @default(AI)
+  modelName          String?
+  provider           String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -216,6 +220,8 @@ model InterviewSession {
   jobTitle   String
   skills     Json
   difficulty Difficulty          @default(MEDIUM)
+  modelName  String?
+  provider   String?
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
