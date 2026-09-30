@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { verifyPassword, createToken } from '@/lib/auth';
-import { createAuthCookieHeader } from '@/lib/session';
+import { setAuthCookie } from '@/lib/session';
 import { loginSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
@@ -11,18 +11,26 @@ export async function POST(request: NextRequest) {
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Please enter a valid email and password' },
         { status: 400 }
       );
     }
 
     const { email, password } = parsed.data;
+    const normalizedEmail = email.trim().toLowerCase();
 
-    // Find user
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Find user case-insensitively
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: normalizedEmail,
+        },
+      },
+    });
+
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Account not found. Please check your email or register.' },
         { status: 401 }
       );
     }
@@ -31,7 +39,7 @@ export async function POST(request: NextRequest) {
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Incorrect password. Please try again.' },
         { status: 401 }
       );
     }
@@ -43,7 +51,7 @@ export async function POST(request: NextRequest) {
       role: user.role,
     });
 
-    // Return response with cookie
+    // Return response with cookie AND token in body
     const response = NextResponse.json({
       message: 'Login successful',
       user: {
@@ -52,15 +60,16 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: user.role,
       },
+      token,
     });
 
-    response.headers.set('Set-Cookie', createAuthCookieHeader(token));
+    setAuthCookie(response, token);
 
     return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: 'An unexpected error occurred during login' },
       { status: 500 }
     );
   }

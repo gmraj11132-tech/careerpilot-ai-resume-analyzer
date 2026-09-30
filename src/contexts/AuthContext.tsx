@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface User {
-  userId: string;
+  id?: string;
+  userId?: string;
   email: string;
   role: string;
   name?: string;
@@ -26,12 +27,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/me');
+      const storedToken =
+        typeof window !== 'undefined' ? localStorage.getItem('careerpilot_token') : null;
+      const headers: Record<string, string> = {};
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`;
+      }
+
+      const res = await fetch('/api/auth/me', { headers });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
       } else {
         setUser(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('careerpilot_token');
+        }
       }
     } catch {
       setUser(null);
@@ -49,16 +60,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       const data = await res.json();
-      if (res.ok) {
-        await refreshUser();
+
+      if (res.ok && data.user) {
+        if (data.token && typeof window !== 'undefined') {
+          localStorage.setItem('careerpilot_token', data.token);
+        }
+        setUser(data.user);
         return { success: true };
       }
-      return { success: false, error: data.error || 'Login failed' };
+
+      return {
+        success: false,
+        error: data.error || 'Invalid credentials. Please verify your email and password.',
+      };
     } catch {
-      return { success: false, error: 'Network error' };
+      return {
+        success: false,
+        error: 'Unable to connect to the server. Please check your internet connection.',
+      };
     }
   };
 
@@ -67,27 +89,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
       const data = await res.json();
-      if (res.ok) {
+
+      if (res.ok && data.user) {
+        if (data.token && typeof window !== 'undefined') {
+          localStorage.setItem('careerpilot_token', data.token);
+        }
+        setUser(data.user);
         return { success: true };
       }
+
+      let errorMsg = data.error || 'Registration failed';
+      if (data.details) {
+        const fields = Object.values(data.details).flat();
+        if (fields.length > 0) {
+          errorMsg = fields.join(', ');
+        }
+      }
+
+      return { success: false, error: errorMsg };
+    } catch {
       return {
         success: false,
-        error: data.error || data.details
-          ? Object.values(data.details || {}).flat().join(', ')
-          : 'Registration failed',
+        error: 'Unable to connect to the server. Please check your internet connection.',
       };
-    } catch {
-      return { success: false, error: 'Network error' };
     }
   };
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      const storedToken =
+        typeof window !== 'undefined' ? localStorage.getItem('careerpilot_token') : null;
+      const headers: Record<string, string> = {};
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`;
+      }
+      await fetch('/api/auth/logout', { method: 'POST', headers });
     } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('careerpilot_token');
+      }
       setUser(null);
     }
   };
