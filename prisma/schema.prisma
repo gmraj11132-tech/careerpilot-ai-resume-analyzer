@@ -1,0 +1,246 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// Enums
+// ------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AnalysisType {
+  AI
+  FALLBACK
+}
+
+enum SkillStatus {
+  IDENTIFIED
+  LEARNING
+  COMPLETED
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  ASSESSMENT
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionCategory {
+  TECHNICAL
+  HR
+  BEHAVIORAL
+  PROJECT
+}
+
+// ------------------------------------------------------
+// Models
+// ------------------------------------------------------
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String?
+  passwordHash      String
+  role              Role               @default(USER)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Relations
+  resumes           Resume[]
+  resumeAnalyses    ResumeAnalysis[]
+  jobMatches        JobMatch[]
+  userSkills        UserSkill[]
+  jobApplications   JobApplication[]
+  interviewSessions InterviewSession[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Resume {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName       String
+  fileType       String
+  fileSize       Int
+  rawText        String
+  parsedData     Json?
+  name           String?
+  email          String?
+  phone          String?
+  education      Json?
+  skills         Json?
+  projects       Json?
+  experience     Json?
+  certifications Json?
+  summary        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  analyses       ResumeAnalysis[]
+  jobMatches     JobMatch[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ResumeAnalysis {
+  id              String       @id @default(cuid())
+  resumeId        String
+  resume          Resume       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  overallScore    Int
+  atsScore        Int
+  skillsScore     Int
+  experienceScore Int
+  educationScore  Int
+  formattingScore Int
+  missingSections Json
+  detectedSkills  Json
+  suggestions     Json
+  analysisType    AnalysisType @default(AI)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([resumeId])
+  @@index([userId])
+  @@index([analysisType])
+  @@index([createdAt])
+}
+
+model JobMatch {
+  id                 String       @id @default(cuid())
+  userId             String
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId           String
+  resume             Resume       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobTitle           String
+  jobDescription     String
+  companyName        String
+  matchPercentage    Int
+  matchingSkills     Json
+  missingSkills      Json
+  relevantProjects   Json
+  relevantExperience Json
+  suggestedChanges   Json
+  suggestedTopics    Json
+  keywords           Json
+  analysisType       AnalysisType @default(AI)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([companyName])
+  @@index([jobTitle])
+  @@index([createdAt])
+}
+
+model Skill {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  category   String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  // Relations
+  userSkills UserSkill[]
+
+  @@index([name])
+  @@index([category])
+}
+
+model UserSkill {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId   String
+  skill     Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  status    SkillStatus @default(IDENTIFIED)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, skillId])
+  @@index([userId])
+  @@index([skillId])
+  @@index([status])
+}
+
+model JobApplication {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     String
+  jobTitle    String
+  jobUrl      String?
+  location    String?
+  appliedDate DateTime          @default(now())
+  status      ApplicationStatus @default(SAVED)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([company])
+  @@index([appliedDate])
+}
+
+model InterviewSession {
+  id         String              @id @default(cuid())
+  userId     String
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle   String
+  skills     Json
+  difficulty Difficulty          @default(MEDIUM)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  // Relations
+  questions  InterviewQuestion[]
+
+  @@index([userId])
+  @@index([jobTitle])
+  @@index([createdAt])
+}
+
+model InterviewQuestion {
+  id              String           @id @default(cuid())
+  sessionId       String
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category        QuestionCategory
+  question        String
+  suggestedAnswer String?
+  keyPoints       Json
+  difficulty      Difficulty       @default(MEDIUM)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([sessionId])
+  @@index([category])
+  @@index([difficulty])
+  @@index([createdAt])
+}
