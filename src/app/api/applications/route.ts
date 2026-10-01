@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Applications list error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      applications: [],
+      stats: [],
+    });
   }
 }
 

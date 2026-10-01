@@ -34,9 +34,14 @@ export default function ApplicationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Application>>({ status: "Applied", date: new Date().toISOString().split('T')[0] });
 
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("careerpilot_token") : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const fetchApps = async () => {
     try {
-      const res = await fetch("/api/applications");
+      const res = await fetch("/api/applications", { headers: getAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
         const apps = (data.applications || []).map((a: any) => ({
@@ -68,7 +73,7 @@ export default function ApplicationsPage() {
     try {
       const res = await fetch("/api/applications", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           company: formData.company,
           jobTitle: formData.title,

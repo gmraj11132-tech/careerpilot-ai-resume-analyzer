@@ -19,10 +19,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const getAuthHeaders = (): Record<string, string> => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("careerpilot_token") : null;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     const fetchDashboardData = async () => {
       try {
         // Normally this would fetch from /api/dashboard
-        const res = await fetch("/api/dashboard").catch(() => null);
+        const res = await fetch("/api/dashboard", { headers: getAuthHeaders() }).catch(() => null);
         
         // Mock data fallback if API doesn't exist yet
         if (!res || !res.ok) {

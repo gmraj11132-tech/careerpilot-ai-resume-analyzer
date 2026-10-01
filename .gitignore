@@ -37,9 +37,7 @@ yarn-error.log*
 next-env.d.ts
 
 # database
-prisma/dev.db
 prisma/dev.db-journal
-prisma/*.db
 prisma/*.db-journal
 
 # uploads
@@ -55,3 +53,5 @@ prisma/*.db-journal
 # OS
 Thumbs.db
 .DS_Store
+
+.vercel

@@ -29,9 +29,14 @@ export default function SkillsPage() {
   const [newSkillCategory, setNewSkillCategory] = useState(CATEGORIES[0]);
   const [isAdding, setIsAdding] = useState(false);
 
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("careerpilot_token") : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const fetchSkills = async () => {
     try {
-      const res = await fetch("/api/skills");
+      const res = await fetch("/api/skills", { headers: getAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
         const list: Skill[] = [];
@@ -68,7 +73,7 @@ export default function SkillsPage() {
     try {
       const res = await fetch("/api/skills", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           name: newSkillName.trim(),
           category: newSkillCategory,
@@ -104,7 +109,7 @@ export default function SkillsPage() {
     try {
       await fetch("/api/skills", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           userSkillId: id,
           status: next.db,

@@ -40,10 +40,15 @@ export default function JobMatchPage() {
     setLoading(true);
     setError("");
 
+    const getAuthHeaders = (): Record<string, string> => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("careerpilot_token") : null;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     try {
       const res = await fetch("/api/jobs/match", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           jobTitle: formData.title,
           companyName: formData.company,

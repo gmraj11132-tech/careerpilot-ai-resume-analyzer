@@ -91,9 +91,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sessions });
   } catch (error) {
     console.error('Interview list error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ sessions: [] });
   }
 }

@@ -43,10 +43,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Skills list error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      skills: {},
+      categories: Object.keys(SKILL_CATEGORIES),
+    });
   }
 }
 

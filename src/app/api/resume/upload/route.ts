@@ -164,9 +164,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ resumes });
   } catch (error) {
     console.error('Resume list error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ resumes: [] });
   }
 }

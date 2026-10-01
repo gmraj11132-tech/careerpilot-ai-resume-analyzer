@@ -24,13 +24,18 @@ export default function ResumeAnalyzePage() {
   const [customApiKey, setCustomApiKey] = useState<string | undefined>(undefined);
   const [error, setError] = useState("");
 
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("careerpilot_token") : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   useEffect(() => {
     fetchResume();
   }, []);
 
   const fetchResume = async () => {
     try {
-      const res = await fetch("/api/resume/upload");
+      const res = await fetch("/api/resume/upload", { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch resume");
       const data = await res.json();
       if (data.resumes && data.resumes.length > 0) {
@@ -38,7 +43,7 @@ export default function ResumeAnalyzePage() {
         setResumeData(latest);
 
         // Also load latest analysis if available
-        const anRes = await fetch("/api/resume/analyze");
+        const anRes = await fetch("/api/resume/analyze", { headers: getAuthHeaders() });
         if (anRes.ok) {
           const anData = await anRes.json();
           if (anData.analyses && anData.analyses.length > 0) {
@@ -78,7 +83,7 @@ export default function ResumeAnalyzePage() {
     try {
       const res = await fetch("/api/resume/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           resumeId: resumeData.id,
           modelId: selectedModelId,

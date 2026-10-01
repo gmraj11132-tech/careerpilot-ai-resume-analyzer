@@ -36,6 +36,11 @@ export default function InterviewPrepPage() {
     difficulty: "MEDIUM",
   });
 
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("careerpilot_token") : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title) {
@@ -54,7 +59,7 @@ export default function InterviewPrepPage() {
 
       const res = await fetch("/api/interview/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           jobTitle: formData.title,
           skills: skillsArray.length > 0 ? skillsArray : ["General"],

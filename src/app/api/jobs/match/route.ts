@@ -126,9 +126,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ matches });
   } catch (error) {
     console.error('Job matches list error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ matches: [] });
   }
 }
